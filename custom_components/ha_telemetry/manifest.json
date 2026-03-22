@@ -1,0 +1,9 @@
+{
+  "domain": "ha_telemetry",
+  "name": "Home Assistant Telemetry",
+  "config_flow": true,
+  "integration_type": "service",
+  "loggers": ["paho"],
+  "requirements": ["paho-mqtt>=2.1.0,<3.0.0"],
+  "version": "0.1.0"
+}

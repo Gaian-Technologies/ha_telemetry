@@ -1,0 +1,54 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Home Assistant Telemetry",
+        "description": "Configure the secure MQTT connection, selected entities, and command allow-list.",
+        "data": {
+          "host": "Broker host",
+          "port": "Broker port",
+          "site_id": "Site ID",
+          "topic_prefix": "Topic prefix",
+          "ca_cert_path": "CA certificate path",
+          "client_cert_path": "Client certificate path",
+          "client_key_path": "Client key path",
+          "entity_ids": "Telemetry entities",
+          "command_entity_ids": "Command-enabled entities",
+          "telemetry_interval_seconds": "Default telemetry interval (seconds)",
+          "heartbeat_interval_seconds": "Default heartbeat interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the MQTT broker.",
+      "command_entities_not_subset": "Command-enabled entities must also be selected for telemetry.",
+      "entity_ids_required": "Select at least one entity.",
+      "invalid_site_id": "Use lowercase letters, numbers, hyphens, or underscores for the site ID.",
+      "missing_file": "One or more certificate files could not be found."
+    },
+    "abort": {
+      "already_configured": "This site ID is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Home Assistant Telemetry options",
+        "description": "Update the secure MQTT connection, selected entities, and command allow-list.",
+        "data": {
+          "host": "Broker host",
+          "port": "Broker port",
+          "site_id": "Site ID",
+          "topic_prefix": "Topic prefix",
+          "ca_cert_path": "CA certificate path",
+          "client_cert_path": "Client certificate path",
+          "client_key_path": "Client key path",
+          "entity_ids": "Telemetry entities",
+          "command_entity_ids": "Command-enabled entities",
+          "telemetry_interval_seconds": "Default telemetry interval (seconds)",
+          "heartbeat_interval_seconds": "Default heartbeat interval (seconds)"
+        }
+      }
+    }
+  }
+}
