@@ -4,20 +4,22 @@ ha_telemetry is a Home Assistant custom integration that publishes periodic
 snapshots of selected entities to a remote MQTT broker and accepts remote
 commands for a smaller allow-listed subset of those entities.
 
-The integration now supports two setup paths:
+The repo root is the install path for Home Assistant. This means you can clone
+it directly into:
 
-- Managed hub: the user enters a hub URL and enrollment token and the integration fetches broker settings and site credentials automatically.
-- Advanced: the user enters direct MQTT settings for self-hosted or lab environments.
+    /config/custom_components/ha_telemetry
+
+and then pull updates in place.
 
 ## Repo Layout
 
-The custom integration lives at:
+Runtime integration files live at the repo root.
 
-    custom_components/ha_telemetry
+Development-only directories live beside them and do not affect Home Assistant:
 
-Copy that directory into your Home Assistant configuration directory under:
-
-    /config/custom_components/ha_telemetry
+- tests/
+- scripts/
+- docs/
 
 ## Features
 
@@ -33,6 +35,15 @@ Copy that directory into your Home Assistant configuration directory under:
 - remote command execution with acknowledgements
 - reauth and reconfigure flows
 
+## Installation
+
+Clone the repo directly into the Home Assistant custom_components directory:
+
+    cd /config/custom_components
+    git clone <repo-url> ha_telemetry
+
+Then restart Home Assistant.
+
 ## Managed Hub Setup
 
 Use this path when the hub operator provides a hosted service.
@@ -45,12 +56,10 @@ Requirements:
 
 Steps:
 
-1. Copy the custom_components/ha_telemetry directory into Home Assistant.
-2. Restart Home Assistant.
-3. Go to Settings, Devices and Services, Add Integration.
-4. Search for Home Assistant Telemetry.
-5. Choose Managed hub.
-6. Enter:
+1. Go to Settings, Devices and Services, Add Integration.
+2. Search for Home Assistant Telemetry.
+3. Choose Managed hub.
+4. Enter:
 
 - Hub URL
 - Enrollment token
