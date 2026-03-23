@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Set up Home Assistant Telemetry",
-        "description": "Choose managed enrollment for the hosted data hub or advanced setup for a manually configured broker.",
+        "description": "Choose managed enrollment for a hosted data hub or advanced setup for a manually configured broker.",
         "menu_options": {
           "managed": "Managed hub",
           "advanced": "Advanced"
@@ -11,9 +11,9 @@
       },
       "managed": {
         "title": "Managed hub enrollment",
-        "description": "Enter the hub URL, your enrollment token, and the entities to share.",
+        "description": "Enter the data_hub API URL, your enrollment token, and the entities to share. Example: http://100.64.0.10:8000 or https://hub.example.com",
         "data": {
-          "hub_url": "Hub URL",
+          "hub_url": "Hub API URL",
           "enrollment_token": "Enrollment token",
           "entity_ids": "Telemetry entities",
           "command_entity_ids": "Command-enabled entities",
@@ -41,9 +41,9 @@
       },
       "reauth_managed": {
         "title": "Refresh managed hub credentials",
-        "description": "Enter a fresh enrollment token to rotate the broker credentials for this site.",
+        "description": "Enter the same data_hub API URL and a fresh enrollment token to rotate the broker credentials for this site.",
         "data": {
-          "hub_url": "Hub URL",
+          "hub_url": "Hub API URL",
           "enrollment_token": "Enrollment token"
         }
       },
@@ -61,9 +61,9 @@
       },
       "reconfigure_managed": {
         "title": "Reconfigure managed hub settings",
-        "description": "Update the local entity selection and managed hub URL.",
+        "description": "Update the local entity selection and the data_hub API URL.",
         "data": {
-          "hub_url": "Hub URL",
+          "hub_url": "Hub API URL",
           "entity_ids": "Telemetry entities",
           "command_entity_ids": "Command-enabled entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
@@ -89,10 +89,16 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to the MQTT broker.",
-      "cannot_enroll": "Failed to enroll with the managed hub.",
+      "cannot_connect": "Enrollment succeeded, but Home Assistant could not connect to the MQTT broker returned by the hub.",
+      "cannot_reach_hub": "Could not reach the hub API URL. Check the URL, Tailscale connectivity, and that port 8000 is reachable.",
       "command_entities_not_subset": "Command-enabled entities must also be selected for telemetry.",
       "entity_ids_required": "Select at least one entity.",
+      "hub_rejected_enrollment": "The hub rejected the enrollment request.",
+      "hub_request_failed": "The hub request failed before enrollment could complete.",
+      "hub_timeout": "Timed out waiting for the hub to respond.",
+      "invalid_enrollment_response": "The hub returned an invalid enrollment response.",
+      "invalid_enrollment_token": "The enrollment token is invalid, expired, revoked, or already used.",
+      "invalid_hub_url": "Enter the full hub API URL, including http:// or https://.",
       "invalid_site_id": "Use lowercase letters, numbers, hyphens, or underscores for the site ID.",
       "missing_file": "The custom CA certificate file could not be found."
     },

@@ -60,10 +60,6 @@ class CannotConnectError(Exception):
     """Raised when the MQTT broker connection test fails."""
 
 
-class CannotEnrollError(Exception):
-    """Raised when managed enrollment fails."""
-
-
 class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 2
 
@@ -76,10 +72,16 @@ class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 cleaned = await _validate_managed_setup(self.hass, user_input)
+            except MissingFileError:
+                errors["base"] = "missing_file"
             except EntitySelectionError as err:
                 errors["base"] = str(err)
-            except CannotEnrollError:
-                errors["base"] = "cannot_enroll"
+            except MissingFileError:
+                errors["base"] = "missing_file"
+            except MissingFileError:
+                errors["base"] = "missing_file"
+            except EnrollmentError as err:
+                errors["base"] = err.translation_key
             except CannotConnectError:
                 errors["base"] = "cannot_connect"
             else:
@@ -129,14 +131,15 @@ class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         entry = self._get_reauth_entry()
         defaults = {
             CONF_HUB_URL: entry.data.get(CONF_HUB_URL, ""),
+            CONF_CA_CERT_PATH: entry.data.get(CONF_CA_CERT_PATH, ""),
         }
         errors: dict[str, str] = {}
 
         if user_input is not None:
             try:
                 updates = await _validate_managed_reauth(self.hass, entry, user_input)
-            except CannotEnrollError:
-                errors["base"] = "cannot_enroll"
+            except EnrollmentError as err:
+                errors["base"] = err.translation_key
             except CannotConnectError:
                 errors["base"] = "cannot_connect"
             else:
@@ -191,7 +194,7 @@ class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                updates = _validate_managed_reconfigure(user_input)
+                updates = _validate_managed_reconfigure(self.hass, user_input)
             except EntitySelectionError as err:
                 errors["base"] = str(err)
             else:
@@ -267,6 +270,7 @@ def _build_managed_schema(defaults: dict[str, Any]) -> vol.Schema:
         {
             vol.Required(CONF_HUB_URL, default=defaults.get(CONF_HUB_URL, "")): selector.TextSelector(),
             vol.Required(CONF_ENROLLMENT_TOKEN, default=defaults.get(CONF_ENROLLMENT_TOKEN, "")): selector.TextSelector(),
+            vol.Optional(CONF_CA_CERT_PATH, default=defaults.get(CONF_CA_CERT_PATH, "")): selector.TextSelector(),
             **_build_shared_entity_fields(defaults),
         }
     )
@@ -277,6 +281,7 @@ def _build_managed_reauth_schema(defaults: dict[str, Any]) -> vol.Schema:
         {
             vol.Required(CONF_HUB_URL, default=defaults.get(CONF_HUB_URL, "")): selector.TextSelector(),
             vol.Required(CONF_ENROLLMENT_TOKEN, default=""): selector.TextSelector(),
+            vol.Optional(CONF_CA_CERT_PATH, default=defaults.get(CONF_CA_CERT_PATH, "")): selector.TextSelector(),
         }
     )
 
@@ -285,6 +290,7 @@ def _build_managed_reconfigure_schema(defaults: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_HUB_URL, default=defaults.get(CONF_HUB_URL, "")): selector.TextSelector(),
+            vol.Optional(CONF_CA_CERT_PATH, default=defaults.get(CONF_CA_CERT_PATH, "")): selector.TextSelector(),
             **_build_shared_entity_fields(defaults),
         }
     )
@@ -408,14 +414,11 @@ async def _validate_managed_setup(hass, user_input: dict[str, Any]) -> dict[str,
     hub_url = str(user_input[CONF_HUB_URL]).strip().rstrip("/")
     enrollment_token = str(user_input[CONF_ENROLLMENT_TOKEN]).strip()
 
-    try:
-        enrollment = await async_enroll_managed_site(
-            hass,
-            hub_url=hub_url,
-            enrollment_token=enrollment_token,
-        )
-    except EnrollmentError as err:
-        raise CannotEnrollError from err
+    enrollment = await async_enroll_managed_site(
+        hass,
+        hub_url=hub_url,
+        enrollment_token=enrollment_token,
+    )
 
     normalized.update(
         {
@@ -428,7 +431,7 @@ async def _validate_managed_setup(hass, user_input: dict[str, Any]) -> dict[str,
             CONF_MQTT_USERNAME: enrollment.mqtt_username,
             CONF_MQTT_PASSWORD: enrollment.mqtt_password,
             CONF_TRANSPORT: enrollment.mqtt_transport,
-            CONF_CA_CERT_PATH: "",
+            CONF_CA_CERT_PATH: _validate_optional_ca_path(hass, user_input.get(CONF_CA_CERT_PATH)),
         }
     )
 
@@ -472,15 +475,12 @@ async def _validate_managed_reauth(hass, entry: config_entries.ConfigEntry, user
     enrollment_token = str(user_input[CONF_ENROLLMENT_TOKEN]).strip()
     site_id = str(entry.data[CONF_SITE_ID]).strip()
 
-    try:
-        enrollment = await async_enroll_managed_site(
-            hass,
-            hub_url=hub_url,
-            enrollment_token=enrollment_token,
-            site_id=site_id,
-        )
-    except EnrollmentError as err:
-        raise CannotEnrollError from err
+    enrollment = await async_enroll_managed_site(
+        hass,
+        hub_url=hub_url,
+        enrollment_token=enrollment_token,
+        site_id=site_id,
+    )
 
     updated = dict(entry.data)
     updated.update(
@@ -492,6 +492,7 @@ async def _validate_managed_reauth(hass, entry: config_entries.ConfigEntry, user
             CONF_MQTT_USERNAME: enrollment.mqtt_username,
             CONF_MQTT_PASSWORD: enrollment.mqtt_password,
             CONF_TRANSPORT: enrollment.mqtt_transport,
+            CONF_CA_CERT_PATH: _validate_optional_ca_path(hass, user_input.get(CONF_CA_CERT_PATH)),
         }
     )
     settings = EntrySettings.from_mapping(hass, updated)
@@ -518,9 +519,10 @@ async def _validate_advanced_reauth(hass, entry: config_entries.ConfigEntry, use
     return updated
 
 
-def _validate_managed_reconfigure(user_input: dict[str, Any]) -> dict[str, Any]:
+def _validate_managed_reconfigure(hass, user_input: dict[str, Any]) -> dict[str, Any]:
     normalized = _normalize_shared(user_input)
     normalized[CONF_HUB_URL] = str(user_input[CONF_HUB_URL]).strip().rstrip("/")
+    normalized[CONF_CA_CERT_PATH] = _validate_optional_ca_path(hass, user_input.get(CONF_CA_CERT_PATH))
     return normalized
 
 

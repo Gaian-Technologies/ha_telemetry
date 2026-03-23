@@ -1,84 +1,62 @@
 # ha_telemetry
 
-ha_telemetry is a Home Assistant custom integration that publishes periodic
-snapshots of selected entities to a remote MQTT broker and accepts remote
-commands for a smaller allow-listed subset of those entities.
+ha_telemetry is a Home Assistant custom integration that publishes periodic telemetry snapshots to a remote MQTT broker and can accept remote commands for a smaller allow-listed subset of entities.
 
-The repo root is the install path for Home Assistant. This means you can clone
-it directly into:
+The repo root is the install path for Home Assistant. Clone it directly into:
 
     /config/custom_components/ha_telemetry
 
-and then pull updates in place.
+## Install
 
-## Repo Layout
-
-Runtime integration files live at the repo root.
-
-Development-only directories live beside them and do not affect Home Assistant:
-
-- tests/
-- scripts/
-- docs/
-
-## Features
-
-- config flow in the Home Assistant UI
-- managed enrollment over HTTPS
-- direct MQTT setup for self-hosted or lab use
-- MQTT 5 over TLS with broker credentials
-- explicit site_id per Home Assistant instance
-- selected telemetry entity allow-list
-- separate command entity allow-list
-- hub-controlled telemetry rate through retained desired config
-- heartbeat and reported-state publishing
-- remote command execution with acknowledgements
-- reauth and reconfigure flows
-
-## Installation
-
-Clone the repo directly into the Home Assistant custom_components directory:
+1. Clone the repo.
 
     cd /config/custom_components
     git clone <repo-url> ha_telemetry
 
-Then restart Home Assistant.
+2. Restart Home Assistant.
 
-## Managed Hub Setup
+## Managed Setup
 
-Use this path when the hub operator provides a hosted service.
+Use managed setup when a data_hub operator gives you:
 
-Requirements:
+- a Hub API URL
+- an enrollment token
 
-- the data_hub API must be reachable over HTTPS
-- the MQTT broker must present a publicly trusted TLS certificate
-- you need an enrollment token from the hub operator
+The Hub API URL is the base URL of the data_hub HTTP API.
+Examples:
 
-Steps:
+- `http://100.118.146.18:8000`
+- `http://192.168.1.50:8000`
+- `https://hub.example.com`
 
-1. Go to Settings, Devices and Services, Add Integration.
-2. Search for Home Assistant Telemetry.
-3. Choose Managed hub.
-4. Enter:
+The enrollment token is the value returned by the data_hub invite API as `enrollment_token`.
 
-- Hub URL
+In the Home Assistant form, enter:
+
+- Hub API URL
 - Enrollment token
 - Telemetry entities
 - Command-enabled entities
+- Optional custom CA certificate path
 - Fallback telemetry interval
 - Fallback heartbeat interval
 
-The integration exchanges the enrollment token for:
+### When To Use The Optional Custom CA Certificate Path
 
-- site_id
-- MQTT broker host and port
-- topic prefix
-- transport mode
-- MQTT username and password
+Use the optional custom CA certificate path when the broker certificate is signed by a private certificate authority, such as a local or Tailscale development hub.
+
+Example path inside Home Assistant:
+
+    ha_telemetry/ca/ca.crt
+
+If you are testing against a local data_hub with generated development certificates:
+
+1. Copy `data_hub/certs/generated/ca/ca.crt` into your Home Assistant config directory.
+2. Enter the relative path in the managed setup form.
 
 ## Advanced Setup
 
-Use this path for self-hosted or lab environments.
+Use advanced setup when you are configuring the broker directly instead of using the managed enrollment API.
 
 Enter:
 
@@ -95,61 +73,9 @@ Enter:
 - Fallback telemetry interval
 - Fallback heartbeat interval
 
-For local development with a private CA, copy the CA certificate into your Home
-Assistant config directory and use a relative path such as:
+## Notes
 
-    ha_telemetry/ca/ca.crt
-
-## Data Flow
-
-Topics used by the integration:
-
-- <topic_prefix>/sites/<site_id>/telemetry
-- <topic_prefix>/sites/<site_id>/desired
-- <topic_prefix>/sites/<site_id>/reported
-- <topic_prefix>/sites/<site_id>/heartbeat
-- <topic_prefix>/sites/<site_id>/commands/request
-- <topic_prefix>/sites/<site_id>/commands/ack
-
-Telemetry is sent as periodic batches, not one MQTT message per entity change.
-That scales better and lets the hub control the send rate cleanly.
-
-## Remote Commands
-
-A command is accepted only when all of the following are true:
-
-- the entity is in the telemetry allow-list
-- the entity is also in the command-enabled allow-list
-- the requested service is in the integration allowed service list
-- the command is addressed to the correct site_id
-- the hub desired config has commands_enabled set to true
-
-Supported services in this version:
-
-- button.press
-- cover.close_cover
-- cover.open_cover
-- cover.stop_cover
-- homeassistant.toggle
-- homeassistant.turn_off
-- homeassistant.turn_on
-- input_boolean.toggle
-- input_boolean.turn_off
-- input_boolean.turn_on
-- input_number.set_value
-- input_select.select_option
-- number.set_value
-- scene.turn_on
-- select.select_option
-
-## Updating Credentials Or Settings
-
-- Use Reauthenticate if the managed hub rotates the broker credentials or if direct MQTT credentials change.
-- Use Reconfigure to change local entity selections or broker settings.
-
-## Operational Notes
-
-- Managed setup is intended for publicly trusted hub deployments.
-- Advanced setup is the right choice for local development with a private CA.
-- Keep the command allow-list intentionally small.
-- Commands stay disabled unless both the hub and the local integration configuration allow them.
+- Managed setup first contacts the Hub API URL, then validates the MQTT broker returned by the hub.
+- If managed setup says it cannot reach the hub, check the URL, Tailscale connectivity, and port `8000`.
+- If managed setup says it cannot connect to the MQTT broker, check port `8883`, certificate trust, and certificate host or IP matching.
+- Command-enabled entities must also be selected for telemetry.
