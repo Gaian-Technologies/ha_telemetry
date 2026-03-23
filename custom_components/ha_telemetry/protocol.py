@@ -51,6 +51,7 @@ def command_ack_topic(topic_prefix: str, site_id: str) -> str:
 
 
 def build_reported_payload(settings: EntrySettings, desired: DesiredConfig, connected: bool) -> dict[str, Any]:
+    commands_enabled = desired.commands_enabled and bool(settings.command_entity_ids)
     return {
         "schema": REPORTED_SCHEMA,
         "site_id": settings.site_id,
@@ -58,6 +59,7 @@ def build_reported_payload(settings: EntrySettings, desired: DesiredConfig, conn
         "selected_entities": list(settings.entity_ids),
         "command_entities": list(settings.command_entity_ids),
         "telemetry_enabled": desired.enabled,
+        "commands_enabled": commands_enabled,
         "telemetry_interval_seconds": desired.telemetry_interval_seconds,
         "heartbeat_interval_seconds": desired.heartbeat_interval_seconds,
         "applied_config_version": desired.config_version,

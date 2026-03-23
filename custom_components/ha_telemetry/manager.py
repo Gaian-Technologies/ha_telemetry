@@ -107,6 +107,16 @@ class TelemetryManager:
             LOGGER.warning("Ignoring malformed command payload: %s", payload)
             return
 
+        if not self._desired.commands_enabled:
+            await self._async_publish_command_ack(
+                command_id=command_id,
+                entity_id=entity_id,
+                service=service,
+                status="rejected",
+                reason="commands_disabled_by_hub",
+            )
+            return
+
         if entity_id not in self.settings.entity_ids or entity_id not in self.settings.command_entity_ids:
             await self._async_publish_command_ack(
                 command_id=command_id,
@@ -289,12 +299,17 @@ class TelemetryManager:
     def diagnostics(self) -> dict[str, Any]:
         return {
             "connected": self._connected,
+            "setup_mode": self.settings.setup_mode,
+            "hub_url": self.settings.hub_url,
+            "host": self.settings.host,
+            "transport": self.settings.transport,
             "site_id": self.settings.site_id,
             "topic_prefix": self.settings.topic_prefix,
             "selected_entity_count": len(self.settings.entity_ids),
             "command_entity_count": len(self.settings.command_entity_ids),
             "desired_config": {
                 "enabled": self._desired.enabled,
+                "commands_enabled": self._desired.commands_enabled,
                 "telemetry_interval_seconds": self._desired.telemetry_interval_seconds,
                 "heartbeat_interval_seconds": self._desired.heartbeat_interval_seconds,
                 "config_version": self._desired.config_version,

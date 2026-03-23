@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
 from .const import DOMAIN
 from .manager import TelemetryManager
 from .models import EntrySettings
+from .mqtt_client import MqttAuthenticationError, MqttConnectionError
 
 
 async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
@@ -21,6 +22,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         await manager.async_start()
+    except MqttAuthenticationError as err:
+        raise ConfigEntryAuthFailed(f"Failed to authenticate MQTT client for {settings.site_id}") from err
+    except MqttConnectionError as err:
+        raise ConfigEntryNotReady(f"Failed to initialize MQTT client for {settings.site_id}") from err
     except Exception as err:
         raise ConfigEntryNotReady(f"Failed to initialize MQTT client for {settings.site_id}") from err
 

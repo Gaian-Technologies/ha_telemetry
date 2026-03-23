@@ -21,20 +21,32 @@ MessageHandler = Callable[[dict[str, Any]], Awaitable[None]]
 ConnectionHandler = Callable[[bool], Awaitable[None]]
 
 
+class MqttConnectionError(Exception):
+    """Raised when the MQTT broker connection fails."""
+
+
+class MqttAuthenticationError(MqttConnectionError):
+    """Raised when the MQTT broker rejects credentials."""
+
+
+def _build_ssl_context(settings: EntrySettings) -> ssl.SSLContext:
+    context = ssl.create_default_context()
+    if settings.ca_cert_path:
+        context.load_verify_locations(cafile=settings.ca_cert_path)
+    return context
+
+
 def _create_paho_client(settings: EntrySettings, client_id: str) -> mqtt.Client:
     client = mqtt.Client(
         callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
         client_id=client_id,
         protocol=mqtt.MQTTv5,
+        transport=settings.transport,
     )
     client.enable_logger(LOGGER)
-    client.tls_set(
-        ca_certs=settings.ca_cert_path,
-        certfile=settings.client_cert_path,
-        keyfile=settings.client_key_path,
-        tls_version=ssl.PROTOCOL_TLS_CLIENT,
-    )
+    client.tls_set_context(_build_ssl_context(settings))
     client.tls_insecure_set(False)
+    client.username_pw_set(settings.mqtt_username, settings.mqtt_password)
     return client
 
 
@@ -65,7 +77,9 @@ def _validate_connection_sync(settings: EntrySettings) -> bool:
         client.loop_start()
         if not connected.wait(timeout=10):
             return False
-        return result["reason_code"] == 0
+        if result["reason_code"] == 0:
+            return True
+        return False
     except Exception:
         LOGGER.exception("Failed to validate MQTT connection for site %s", settings.site_id)
         return False
@@ -93,14 +107,17 @@ class TelemetryMqttClient:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._client: mqtt.Client | None = None
         self._connected = asyncio.Event()
+        self._startup_result: asyncio.Future[None] | None = None
 
     async def async_start(self) -> None:
         self._loop = asyncio.get_running_loop()
+        self._startup_result = self._loop.create_future()
         self._client = await asyncio.to_thread(_create_paho_client, self._settings, self._settings.site_id)
         self._client.on_connect = self._on_connect
         self._client.on_disconnect = self._on_disconnect
         self._client.on_message = self._on_message
         await asyncio.to_thread(self._connect_sync)
+        await asyncio.wait_for(self._startup_result, timeout=15)
 
     async def async_stop(self) -> None:
         if self._client is None:
@@ -125,14 +142,14 @@ class TelemetryMqttClient:
 
     def _subscribe_sync(self) -> None:
         assert self._client is not None
-        subscriptions = [
-            (desired_topic(self._settings.topic_prefix, self._settings.site_id), 1),
-            (command_request_topic(self._settings.topic_prefix, self._settings.site_id), 1),
-        ]
+        subscriptions = [(desired_topic(self._settings.topic_prefix, self._settings.site_id), 1)]
+        if self._settings.command_subscription_enabled:
+            subscriptions.append((command_request_topic(self._settings.topic_prefix, self._settings.site_id), 1))
         for topic, qos in subscriptions:
             result, _mid = self._client.subscribe(topic, qos=qos)
-            if result != mqtt.MQTT_ERR_SUCCESS:
-                raise RuntimeError(f"MQTT subscribe failed for {topic} with rc={result}")
+            if result == mqtt.MQTT_ERR_SUCCESS:
+                continue
+            raise RuntimeError(f"MQTT subscribe failed for {topic} with rc={result}")
 
     def _connect_sync(self) -> None:
         assert self._client is not None
@@ -151,8 +168,9 @@ class TelemetryMqttClient:
         assert self._client is not None
         message = self._client.publish(topic, payload=raw_payload, qos=qos, retain=retain)
         message.wait_for_publish()
-        if message.rc != mqtt.MQTT_ERR_SUCCESS:
-            raise RuntimeError(f"MQTT publish failed with rc={message.rc}")
+        if message.rc == mqtt.MQTT_ERR_SUCCESS:
+            return
+        raise RuntimeError(f"MQTT publish failed with rc={message.rc}")
 
     def _on_connect(
         self,
@@ -162,19 +180,25 @@ class TelemetryMqttClient:
         reason_code: Any,
         _properties: Any,
     ) -> None:
-        if int(reason_code) != 0:
-            LOGGER.error("MQTT connection failed with reason code %s", reason_code)
+        if int(reason_code) == 0:
+            self._connected.set()
+            try:
+                self._subscribe_sync()
+            except Exception as err:
+                LOGGER.exception("Failed to subscribe to MQTT topics for site %s", self._settings.site_id)
+                self._set_startup_exception(MqttConnectionError(str(err)))
+                return
+
+            self._set_startup_success()
+            if self._loop is not None:
+                asyncio.run_coroutine_threadsafe(self._on_connected(True), self._loop)
             return
 
-        self._connected.set()
-        try:
-            self._subscribe_sync()
-        except Exception:
-            LOGGER.exception("Failed to subscribe to MQTT topics for site %s", self._settings.site_id)
+        LOGGER.error("MQTT connection failed with reason code %s", reason_code)
+        if int(reason_code) in {134, 135}:
+            self._set_startup_exception(MqttAuthenticationError(f"mqtt_auth_failed:{int(reason_code)}"))
             return
-
-        if self._loop is not None:
-            asyncio.run_coroutine_threadsafe(self._on_connected(True), self._loop)
+        self._set_startup_exception(MqttConnectionError(f"mqtt_connect_failed:{int(reason_code)}"))
 
     def _on_disconnect(
         self,
@@ -185,6 +209,8 @@ class TelemetryMqttClient:
         _properties: Any,
     ) -> None:
         self._connected.clear()
+        if self._startup_result is not None and not self._startup_result.done():
+            self._set_startup_exception(MqttConnectionError("mqtt_disconnected_during_startup"))
         if self._loop is not None:
             asyncio.run_coroutine_threadsafe(self._on_connected(False), self._loop)
 
@@ -213,3 +239,11 @@ class TelemetryMqttClient:
             return
 
         LOGGER.warning("Ignoring MQTT message on unexpected topic %s", topic)
+
+    def _set_startup_success(self) -> None:
+        if self._startup_result is not None and not self._startup_result.done():
+            self._startup_result.set_result(None)
+
+    def _set_startup_exception(self, error: Exception) -> None:
+        if self._startup_result is not None and not self._startup_result.done():
+            self._startup_result.set_exception(error)
