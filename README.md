@@ -41,18 +41,24 @@ In the Home Assistant form, enter:
 - Fallback telemetry interval
 - Fallback heartbeat interval
 
-### When To Use The Optional Custom CA Certificate Path
+### Optional Custom CA Certificate Path
 
 Use the optional custom CA certificate path when the broker certificate is signed by a private certificate authority, such as a local or Tailscale development hub.
 
-Example path inside Home Assistant:
+If the file exists at:
 
-    ha_telemetry/ca/ca.crt
+- `/root/config/custom_components/ha_telemetry/ca/ca.crt`
+
+then the preferred value to enter in Home Assistant is the path relative to the Home Assistant config directory:
+
+- `custom_components/ha_telemetry/ca/ca.crt`
+
+Absolute paths also work, but relative paths are cleaner and more portable.
 
 If you are testing against a local data_hub with generated development certificates:
 
 1. Copy `data_hub/certs/generated/ca/ca.crt` into your Home Assistant config directory.
-2. Enter the relative path in the managed setup form.
+2. Enter `custom_components/ha_telemetry/ca/ca.crt` in the managed setup form.
 
 ## Advanced Setup
 
