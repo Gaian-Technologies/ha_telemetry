@@ -1,6 +1,14 @@
 # ha_telemetry
 
-ha_telemetry is a Home Assistant custom integration that publishes periodic telemetry snapshots to a remote MQTT broker and can accept remote commands for a smaller allow-listed subset of entities.
+`ha_telemetry` is a Home Assistant custom integration that publishes telemetry snapshots to a remotely hosted `data_hub` over MQTT and accepts a small allow-listed set of remote commands.
+
+The supported workflow is the production workflow now used by this system:
+
+1. the operator gives Home Assistant a public Hub API URL
+2. the operator gives Home Assistant an `enrollment_token`
+3. Home Assistant enrolls through the Hub API
+4. the hub returns broker credentials and topic details
+5. Home Assistant connects directly to the MQTT broker over TLS
 
 The repo root is the install path for Home Assistant. Clone it directly into:
 
@@ -15,21 +23,13 @@ The repo root is the install path for Home Assistant. Clone it directly into:
 
 2. Restart Home Assistant.
 
-## Managed Setup
+## Supported Setup
 
-Use managed setup when a data_hub operator gives you:
+Use the integration only with managed hub enrollment.
+You need:
 
-- a Hub API URL
-- an enrollment token
-
-The Hub API URL is the base URL of the data_hub HTTP API.
-Examples:
-
-- `http://100.118.146.18:8000`
-- `http://192.168.1.50:8000`
-- `https://hub.example.com`
-
-The enrollment token is the value returned by the data_hub invite API as `enrollment_token`.
+- a public Hub API URL such as `https://hub.example.com`
+- an `enrollment_token` issued by `data_hub`
 
 In the Home Assistant form, enter:
 
@@ -37,51 +37,15 @@ In the Home Assistant form, enter:
 - Enrollment token
 - Telemetry entities
 - Command-enabled entities
-- Optional custom CA certificate path
 - Fallback telemetry interval
 - Fallback heartbeat interval
 
-### Optional Custom CA Certificate Path
-
-Use the optional custom CA certificate path when the broker certificate is signed by a private certificate authority, such as a local or Tailscale development hub.
-
-If the file exists at:
-
-- `/root/config/custom_components/ha_telemetry/ca/ca.crt`
-
-then the preferred value to enter in Home Assistant is the path relative to the Home Assistant config directory:
-
-- `custom_components/ha_telemetry/ca/ca.crt`
-
-Absolute paths also work, but relative paths are cleaner and more portable.
-
-If you are testing against a local data_hub with generated development certificates:
-
-1. Copy `data_hub/certs/generated/ca/ca.crt` into your Home Assistant config directory.
-2. Enter `custom_components/ha_telemetry/ca/ca.crt` in the managed setup form.
-
-## Advanced Setup
-
-Use advanced setup when you are configuring the broker directly instead of using the managed enrollment API.
-
-Enter:
-
-- Broker host
-- Broker port
-- Site ID
-- Topic prefix
-- MQTT username
-- MQTT password
-- Optional custom CA certificate path
-- Transport
-- Telemetry entities
-- Command-enabled entities
-- Fallback telemetry interval
-- Fallback heartbeat interval
+The integration then validates the hub response and verifies that the returned MQTT broker is reachable before creating the entry.
 
 ## Notes
 
-- Managed setup first contacts the Hub API URL, then validates the MQTT broker returned by the hub.
-- If managed setup says it cannot reach the hub, check the URL, Tailscale connectivity, and port `8000`.
-- If managed setup says it cannot connect to the MQTT broker, check port `8883`, certificate trust, and certificate host or IP matching.
+- This integration no longer supports manual broker configuration.
+- This integration assumes a publicly trusted broker certificate and the current supported `data_hub` deployment shape.
 - Command-enabled entities must also be selected for telemetry.
+- If setup says it cannot reach the hub, check the public Hub API URL, DNS, firewall, and reverse proxy configuration.
+- If setup says it cannot connect to the MQTT broker returned by the hub, check public reachability to port `8883`, TLS certificate validity, and the broker hostname returned by the hub.

@@ -59,17 +59,22 @@ async def async_enroll_managed_site(
         raise EnrollmentError(_map_error_payload(payload))
 
     try:
+        mqtt_transport = str(payload.get("mqtt_transport", "tcp")).strip()
+        if mqtt_transport != "tcp":
+            raise EnrollmentError("unsupported_mqtt_transport")
+
         return ManagedEnrollmentResult(
             site_id=str(payload["site_id"]).strip(),
             mqtt_host=str(payload["mqtt_host"]).strip(),
             mqtt_port=int(payload["mqtt_port"]),
-            mqtt_transport=str(payload.get("mqtt_transport", "tcp")).strip(),
             mqtt_topic_prefix=str(payload["mqtt_topic_prefix"]).strip("/"),
             mqtt_username=str(payload["mqtt_username"]).strip(),
             mqtt_password=str(payload["mqtt_password"]),
             hub_url=str(payload.get("hub_url", cleaned_hub_url)).strip().rstrip("/"),
             commands_allowed=bool(payload.get("commands_allowed", False)),
         )
+    except EnrollmentError:
+        raise
     except (KeyError, TypeError, ValueError) as err:
         raise EnrollmentError("invalid_enrollment_response") from err
 

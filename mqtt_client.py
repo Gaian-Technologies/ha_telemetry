@@ -33,11 +33,8 @@ def _reason_code_value(reason_code: Any) -> int:
     return int(getattr(reason_code, "value", reason_code))
 
 
-def _build_ssl_context(settings: EntrySettings) -> ssl.SSLContext:
-    context = ssl.create_default_context()
-    if settings.ca_cert_path:
-        context.load_verify_locations(cafile=settings.ca_cert_path)
-    return context
+def _build_ssl_context() -> ssl.SSLContext:
+    return ssl.create_default_context()
 
 
 def _create_paho_client(settings: EntrySettings, client_id: str) -> mqtt.Client:
@@ -45,10 +42,10 @@ def _create_paho_client(settings: EntrySettings, client_id: str) -> mqtt.Client:
         callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
         client_id=client_id,
         protocol=mqtt.MQTTv5,
-        transport=settings.transport,
+        transport="tcp",
     )
     client.enable_logger(LOGGER)
-    client.tls_set_context(_build_ssl_context(settings))
+    client.tls_set_context(_build_ssl_context())
     client.tls_insecure_set(False)
     client.username_pw_set(settings.mqtt_username, settings.mqtt_password)
     return client
@@ -81,9 +78,7 @@ def _validate_connection_sync(settings: EntrySettings) -> bool:
         client.loop_start()
         if not connected.wait(timeout=10):
             return False
-        if result["reason_code"] == 0:
-            return True
-        return False
+        return result["reason_code"] == 0
     except Exception:
         LOGGER.exception("Failed to validate MQTT connection for site %s", settings.site_id)
         return False

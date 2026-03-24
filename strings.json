@@ -3,15 +3,7 @@
     "step": {
       "user": {
         "title": "Set up Home Assistant Telemetry",
-        "description": "Choose managed enrollment for a hosted data hub or advanced setup for a manually configured broker.",
-        "menu_options": {
-          "managed": "Managed hub",
-          "advanced": "Advanced"
-        }
-      },
-      "managed": {
-        "title": "Managed hub enrollment",
-        "description": "Enter the data_hub API URL, your enrollment token, and the entities to share. Example: http://100.64.0.10:8000 or https://hub.example.com",
+        "description": "Enter the data_hub API URL, your enrollment token, and the entities to share. Example: https://hub.example.com",
         "data": {
           "hub_url": "Hub API URL",
           "enrollment_token": "Enrollment token",
@@ -21,66 +13,19 @@
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
         }
       },
-      "advanced": {
-        "title": "Advanced MQTT setup",
-        "description": "Configure direct MQTT access for self-hosted or lab environments.",
-        "data": {
-          "host": "Broker host",
-          "port": "Broker port",
-          "site_id": "Site ID",
-          "topic_prefix": "Topic prefix",
-          "mqtt_username": "MQTT username",
-          "mqtt_password": "MQTT password",
-          "ca_cert_path": "Custom CA certificate path",
-          "transport": "Transport",
-          "entity_ids": "Telemetry entities",
-          "command_entity_ids": "Command-enabled entities",
-          "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
-          "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
-        }
-      },
-      "reauth_managed": {
-        "title": "Refresh managed hub credentials",
-        "description": "Enter the same data_hub API URL and a fresh enrollment token to rotate the broker credentials for this site.",
+      "reauth": {
+        "title": "Refresh hub credentials",
+        "description": "Enter the same Hub API URL and a fresh enrollment token to rotate the broker credentials for this site.",
         "data": {
           "hub_url": "Hub API URL",
           "enrollment_token": "Enrollment token"
         }
       },
-      "reauth_advanced": {
-        "title": "Refresh MQTT credentials",
-        "description": "Update the direct broker credentials used by this site.",
-        "data": {
-          "host": "Broker host",
-          "port": "Broker port",
-          "mqtt_username": "MQTT username",
-          "mqtt_password": "MQTT password",
-          "ca_cert_path": "Custom CA certificate path",
-          "transport": "Transport"
-        }
-      },
-      "reconfigure_managed": {
-        "title": "Reconfigure managed hub settings",
-        "description": "Update the local entity selection and the data_hub API URL.",
+      "reconfigure": {
+        "title": "Reconfigure telemetry settings",
+        "description": "Update the Hub API URL and the local entity selection for this site.",
         "data": {
           "hub_url": "Hub API URL",
-          "entity_ids": "Telemetry entities",
-          "command_entity_ids": "Command-enabled entities",
-          "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
-          "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
-        }
-      },
-      "reconfigure_advanced": {
-        "title": "Reconfigure advanced MQTT settings",
-        "description": "Update the direct broker settings and local entity selection.",
-        "data": {
-          "host": "Broker host",
-          "port": "Broker port",
-          "topic_prefix": "Topic prefix",
-          "mqtt_username": "MQTT username",
-          "mqtt_password": "MQTT password",
-          "ca_cert_path": "Custom CA certificate path",
-          "transport": "Transport",
           "entity_ids": "Telemetry entities",
           "command_entity_ids": "Command-enabled entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
@@ -90,7 +35,7 @@
     },
     "error": {
       "cannot_connect": "Enrollment succeeded, but Home Assistant could not connect to the MQTT broker returned by the hub.",
-      "cannot_reach_hub": "Could not reach the hub API URL. Check the URL, Tailscale connectivity, and that port 8000 is reachable.",
+      "cannot_reach_hub": "Could not reach the hub API URL. Check the URL, DNS, firewall, and reverse proxy configuration.",
       "command_entities_not_subset": "Command-enabled entities must also be selected for telemetry.",
       "entity_ids_required": "Select at least one entity.",
       "hub_rejected_enrollment": "The hub rejected the enrollment request.",
@@ -99,8 +44,7 @@
       "invalid_enrollment_response": "The hub returned an invalid enrollment response.",
       "invalid_enrollment_token": "The enrollment token is invalid, expired, revoked, or already used.",
       "invalid_hub_url": "Enter the full hub API URL, including http:// or https://.",
-      "invalid_site_id": "Use lowercase letters, numbers, hyphens, or underscores for the site ID.",
-      "missing_file": "The custom CA certificate file could not be found."
+      "unsupported_mqtt_transport": "The hub returned an unsupported MQTT transport. This integration currently supports MQTT over TLS on TCP only."
     },
     "abort": {
       "already_configured": "This site ID is already configured."

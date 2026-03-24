@@ -299,10 +299,8 @@ class TelemetryManager:
     def diagnostics(self) -> dict[str, Any]:
         return {
             "connected": self._connected,
-            "setup_mode": self.settings.setup_mode,
             "hub_url": self.settings.hub_url,
             "host": self.settings.host,
-            "transport": self.settings.transport,
             "site_id": self.settings.site_id,
             "topic_prefix": self.settings.topic_prefix,
             "selected_entity_count": len(self.settings.entity_ids),
