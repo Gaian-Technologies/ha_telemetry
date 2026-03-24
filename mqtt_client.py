@@ -29,6 +29,10 @@ class MqttAuthenticationError(MqttConnectionError):
     """Raised when the MQTT broker rejects credentials."""
 
 
+def _reason_code_value(reason_code: Any) -> int:
+    return int(getattr(reason_code, "value", reason_code))
+
+
 def _build_ssl_context(settings: EntrySettings) -> ssl.SSLContext:
     context = ssl.create_default_context()
     if settings.ca_cert_path:
@@ -66,7 +70,7 @@ def _validate_connection_sync(settings: EntrySettings) -> bool:
         reason_code: Any,
         _properties: Any,
     ) -> None:
-        result["reason_code"] = int(reason_code)
+        result["reason_code"] = _reason_code_value(reason_code)
         connected.set()
         validation_client.disconnect()
 
@@ -180,7 +184,8 @@ class TelemetryMqttClient:
         reason_code: Any,
         _properties: Any,
     ) -> None:
-        if int(reason_code) == 0:
+        reason_value = _reason_code_value(reason_code)
+        if reason_value == 0:
             self._connected.set()
             try:
                 self._subscribe_sync()
@@ -195,10 +200,10 @@ class TelemetryMqttClient:
             return
 
         LOGGER.error("MQTT connection failed with reason code %s", reason_code)
-        if int(reason_code) in {134, 135}:
-            self._set_startup_exception(MqttAuthenticationError(f"mqtt_auth_failed:{int(reason_code)}"))
+        if reason_value in {134, 135}:
+            self._set_startup_exception(MqttAuthenticationError(f"mqtt_auth_failed:{reason_value}"))
             return
-        self._set_startup_exception(MqttConnectionError(f"mqtt_connect_failed:{int(reason_code)}"))
+        self._set_startup_exception(MqttConnectionError(f"mqtt_connect_failed:{reason_value}"))
 
     def _on_disconnect(
         self,
