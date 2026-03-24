@@ -44,7 +44,7 @@
       "invalid_enrollment_response": "The hub returned an invalid enrollment response.",
       "invalid_enrollment_token": "The enrollment token is invalid, expired, revoked, or already used.",
       "invalid_hub_url": "Enter the full hub API URL, including http:// or https://.",
-      "unsupported_mqtt_transport": "The hub returned an unsupported MQTT transport. This integration currently supports MQTT over TLS on TCP only."
+      "unsupported_mqtt_transport": "The hub returned an unsupported MQTT transport. This integration supports MQTT over TLS on TCP only."
     },
     "abort": {
       "already_configured": "This site ID is already configured."
