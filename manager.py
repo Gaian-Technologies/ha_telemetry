@@ -1,3 +1,5 @@
+"""Runtime manager that turns Home Assistant state into hub telemetry traffic."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -40,8 +42,9 @@ def _json_safe(value: Any) -> Any:
         return value.isoformat()
     return str(value)
 
-
 class TelemetryManager:
+    """Own the MQTT session, publish cadence, and command handling for one site."""
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, settings: EntrySettings) -> None:
         self.hass = hass
         self.entry = entry
@@ -231,6 +234,8 @@ class TelemetryManager:
         try:
             await self._mqtt_client.async_publish_json(topic, payload, retain=retain)
         except RuntimeError:
+            # Startup and reconnect races are expected; reported state and the
+            # next scheduled publish catch the site back up after reconnect.
             LOGGER.debug("Skipping publish while MQTT is disconnected for topic %s", topic)
 
     def _reschedule_telemetry(self) -> None:
@@ -288,6 +293,8 @@ class TelemetryManager:
             "state": state.state,
             "available": state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE),
             "attributes": {
+                # Only allowlisted attributes are exported so telemetry stays
+                # predictable and does not leak large or sensitive state blobs.
                 key: _json_safe(state.attributes[key])
                 for key in TELEMETRY_ATTRIBUTE_ALLOWLIST
                 if key in state.attributes

@@ -1,3 +1,5 @@
+"""Redacted diagnostics for a single Home Assistant telemetry entry."""
+
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry

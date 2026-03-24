@@ -1,3 +1,5 @@
+"""MQTT client utilities for setup-time validation and runtime site transport."""
+
 from __future__ import annotations
 
 import asyncio
@@ -30,6 +32,8 @@ class MqttAuthenticationError(MqttConnectionError):
 
 
 def _reason_code_value(reason_code: Any) -> int:
+    # Paho can surface either an int or a ReasonCode object depending on the
+    # callback path, so normalize once at the boundary.
     return int(getattr(reason_code, "value", reason_code))
 
 
@@ -56,6 +60,8 @@ async def async_validate_connection(hass: HomeAssistant, settings: EntrySettings
 
 
 def _validate_connection_sync(settings: EntrySettings) -> bool:
+    """Perform a short broker auth/TLS check during config flow."""
+
     connected = threading.Event()
     result: dict[str, int | None] = {"reason_code": None}
     client = _create_paho_client(settings, f"{settings.site_id}-validate-{uuid.uuid4().hex[:8]}")
@@ -88,8 +94,9 @@ def _validate_connection_sync(settings: EntrySettings) -> bool:
         except Exception:
             LOGGER.debug("MQTT validation loop stop raised during cleanup", exc_info=True)
 
-
 class TelemetryMqttClient:
+    """Maintain the long-lived broker connection for one enrolled site."""
+
     def __init__(
         self,
         hass: HomeAssistant,

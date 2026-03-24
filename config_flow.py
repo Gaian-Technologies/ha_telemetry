@@ -1,3 +1,5 @@
+"""Home Assistant config flow for the managed hub enrollment workflow."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -35,8 +37,9 @@ class EntitySelectionError(Exception):
 class CannotConnectError(Exception):
     """Raised when the MQTT broker connection test fails."""
 
-
 class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Create, reauth, and reconfigure entries for a single managed site."""
+
     VERSION = 2
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
@@ -187,6 +190,8 @@ def _normalize_shared(user_input: dict[str, Any]) -> dict[str, Any]:
 
 
 def _managed_entry_data(local_settings: dict[str, Any], enrollment) -> dict[str, Any]:
+    # Entity selection and local publish cadence stay operator-controlled; the
+    # hub owns broker identity, topic namespace, and command eligibility.
     return {
         CONF_HUB_URL: enrollment.hub_url,
         CONF_HOST: enrollment.mqtt_host,
@@ -222,6 +227,8 @@ async def _validate_reauth(hass, entry: config_entries.ConfigEntry, user_input: 
     enrollment_token = str(user_input[CONF_ENROLLMENT_TOKEN]).strip()
     site_id = str(entry.data[CONF_SITE_ID]).strip()
 
+    # Reauth rotates credentials for the existing site instead of provisioning a
+    # second site record for the same Home Assistant instance.
     enrollment = await async_enroll_managed_site(
         hass,
         hub_url=hub_url,

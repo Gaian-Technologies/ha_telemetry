@@ -1,3 +1,5 @@
+"""HTTP client helpers for managed enrollment against the public hub API."""
+
 from __future__ import annotations
 
 import asyncio
@@ -33,10 +35,14 @@ async def async_enroll_managed_site(
     enrollment_token: str,
     site_id: str | None = None,
 ) -> ManagedEnrollmentResult:
+    """Exchange an enrollment token for MQTT connection details."""
+
     cleaned_hub_url = _normalize_hub_url(hub_url)
     session = async_get_clientsession(hass)
     request_body: dict[str, Any] = {"enrollment_token": enrollment_token.strip()}
     if site_id:
+        # Reauth passes the existing site ID so the hub rotates credentials for
+        # that site instead of issuing a new identity.
         request_body["site_id"] = site_id
 
     url = f"{cleaned_hub_url}/api/v1/enrollment"

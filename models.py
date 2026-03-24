@@ -1,3 +1,5 @@
+"""Typed runtime models for the managed Home Assistant integration workflow."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -39,6 +41,8 @@ def _positive_int(value: Any, default: int) -> int:
 
 @dataclass(slots=True, frozen=True)
 class EntrySettings:
+    """Resolved integration settings for one enrolled Home Assistant site."""
+
     hub_url: str
     host: str
     port: int
@@ -91,6 +95,8 @@ class EntrySettings:
 
 @dataclass(slots=True, frozen=True)
 class ManagedEnrollmentResult:
+    """Broker credentials and hub metadata returned by enrollment."""
+
     site_id: str
     mqtt_host: str
     mqtt_port: int
@@ -103,6 +109,8 @@ class ManagedEnrollmentResult:
 
 @dataclass(slots=True)
 class DesiredConfig:
+    """Hub-controlled behavior that the integration applies locally."""
+
     enabled: bool
     commands_enabled: bool
     telemetry_interval_seconds: int
