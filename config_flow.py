@@ -11,7 +11,6 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers import selector
 
 from .const import (
-    CONF_COMMAND_ENTITY_IDS,
     CONF_ENROLLMENT_TOKEN,
     CONF_ENTITY_IDS,
     CONF_HEARTBEAT_INTERVAL_SECONDS,
@@ -37,10 +36,11 @@ class EntitySelectionError(Exception):
 class CannotConnectError(Exception):
     """Raised when the MQTT broker connection test fails."""
 
+
 class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Create, reauth, and reconfigure entries for a single managed site."""
 
-    VERSION = 2
+    VERSION = 3
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
@@ -126,10 +126,6 @@ def _build_shared_entity_fields(defaults: dict[str, Any]) -> dict:
             CONF_ENTITY_IDS,
             default=defaults.get(CONF_ENTITY_IDS, []),
         ): selector.EntitySelector(selector.EntitySelectorConfig(multiple=True)),
-        vol.Optional(
-            CONF_COMMAND_ENTITY_IDS,
-            default=defaults.get(CONF_COMMAND_ENTITY_IDS, []),
-        ): selector.EntitySelector(selector.EntitySelectorConfig(multiple=True)),
         vol.Required(
             CONF_TELEMETRY_INTERVAL_SECONDS,
             default=defaults.get(CONF_TELEMETRY_INTERVAL_SECONDS, DEFAULT_TELEMETRY_INTERVAL_SECONDS),
@@ -169,21 +165,17 @@ def _build_reconfigure_schema(defaults: dict[str, Any]) -> vol.Schema:
     )
 
 
-def _validate_entity_selection(user_input: dict[str, Any]) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _validate_entity_selection(user_input: dict[str, Any]) -> tuple[str, ...]:
     entity_ids = normalize_entity_ids(user_input.get(CONF_ENTITY_IDS, []))
-    command_entity_ids = normalize_entity_ids(user_input.get(CONF_COMMAND_ENTITY_IDS, []))
     if not entity_ids:
         raise EntitySelectionError("entity_ids_required")
-    if not set(command_entity_ids).issubset(set(entity_ids)):
-        raise EntitySelectionError("command_entities_not_subset")
-    return entity_ids, command_entity_ids
+    return entity_ids
 
 
 def _normalize_shared(user_input: dict[str, Any]) -> dict[str, Any]:
-    entity_ids, command_entity_ids = _validate_entity_selection(user_input)
+    entity_ids = _validate_entity_selection(user_input)
     return {
         CONF_ENTITY_IDS: list(entity_ids),
-        CONF_COMMAND_ENTITY_IDS: list(command_entity_ids),
         CONF_TELEMETRY_INTERVAL_SECONDS: int(user_input.get(CONF_TELEMETRY_INTERVAL_SECONDS, DEFAULT_TELEMETRY_INTERVAL_SECONDS)),
         CONF_HEARTBEAT_INTERVAL_SECONDS: int(user_input.get(CONF_HEARTBEAT_INTERVAL_SECONDS, DEFAULT_HEARTBEAT_INTERVAL_SECONDS)),
     }
@@ -191,7 +183,7 @@ def _normalize_shared(user_input: dict[str, Any]) -> dict[str, Any]:
 
 def _managed_entry_data(local_settings: dict[str, Any], enrollment) -> dict[str, Any]:
     # Entity selection and local publish cadence stay operator-controlled; the
-    # hub owns broker identity, topic namespace, and command eligibility.
+    # hub owns broker identity and topic namespace.
     return {
         CONF_HUB_URL: enrollment.hub_url,
         CONF_HOST: enrollment.mqtt_host,
@@ -238,7 +230,6 @@ async def _validate_reauth(hass, entry: config_entries.ConfigEntry, user_input: 
 
     local_settings = {
         CONF_ENTITY_IDS: list(entry.data.get(CONF_ENTITY_IDS, [])),
-        CONF_COMMAND_ENTITY_IDS: list(entry.data.get(CONF_COMMAND_ENTITY_IDS, [])),
         CONF_TELEMETRY_INTERVAL_SECONDS: int(entry.data.get(CONF_TELEMETRY_INTERVAL_SECONDS, DEFAULT_TELEMETRY_INTERVAL_SECONDS)),
         CONF_HEARTBEAT_INTERVAL_SECONDS: int(entry.data.get(CONF_HEARTBEAT_INTERVAL_SECONDS, DEFAULT_HEARTBEAT_INTERVAL_SECONDS)),
     }

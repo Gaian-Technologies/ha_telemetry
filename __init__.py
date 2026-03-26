@@ -15,6 +15,22 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     return True
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    if entry.version >= 3:
+        return True
+
+    legacy_command_key = "command_entity_ids"
+    migrated_data = {key: value for key, value in entry.data.items() if key != legacy_command_key}
+    migrated_options = {key: value for key, value in entry.options.items() if key != legacy_command_key}
+    hass.config_entries.async_update_entry(
+        entry,
+        data=migrated_data,
+        options=migrated_options,
+        version=3,
+    )
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     settings = EntrySettings.from_entry(hass, entry)

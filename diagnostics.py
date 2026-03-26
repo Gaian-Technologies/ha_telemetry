@@ -22,7 +22,6 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigE
             "topic_prefix": settings.topic_prefix,
             "mqtt_password": "<redacted>",
             "entity_ids": list(settings.entity_ids),
-            "command_entity_ids": list(settings.command_entity_ids),
             "telemetry_interval_seconds": settings.telemetry_interval_seconds,
             "heartbeat_interval_seconds": settings.heartbeat_interval_seconds,
         },

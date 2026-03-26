@@ -9,8 +9,6 @@ TELEMETRY_SCHEMA: Final = "telemetry_batch.v1"
 DESIRED_SCHEMA: Final = "desired_config.v1"
 REPORTED_SCHEMA: Final = "reported_state.v1"
 HEARTBEAT_SCHEMA: Final = "heartbeat.v1"
-COMMAND_REQUEST_SCHEMA: Final = "command_request.v1"
-COMMAND_ACK_SCHEMA: Final = "command_ack.v1"
 
 
 def utcnow() -> datetime:
@@ -42,24 +40,13 @@ def heartbeat_topic(topic_prefix: str, site_id: str) -> str:
     return f"{site_root(topic_prefix, site_id)}/heartbeat"
 
 
-def command_request_topic(topic_prefix: str, site_id: str) -> str:
-    return f"{site_root(topic_prefix, site_id)}/commands/request"
-
-
-def command_ack_topic(topic_prefix: str, site_id: str) -> str:
-    return f"{site_root(topic_prefix, site_id)}/commands/ack"
-
-
 def build_reported_payload(settings: EntrySettings, desired: DesiredConfig, connected: bool) -> dict[str, Any]:
-    commands_enabled = desired.commands_enabled and bool(settings.command_entity_ids)
     return {
         "schema": REPORTED_SCHEMA,
         "site_id": settings.site_id,
         "connected": connected,
         "selected_entities": list(settings.entity_ids),
-        "command_entities": list(settings.command_entity_ids),
         "telemetry_enabled": desired.enabled,
-        "commands_enabled": commands_enabled,
         "telemetry_interval_seconds": desired.telemetry_interval_seconds,
         "heartbeat_interval_seconds": desired.heartbeat_interval_seconds,
         "applied_config_version": desired.config_version,
@@ -100,25 +87,3 @@ def build_telemetry_payload(
         "interval_seconds": desired.telemetry_interval_seconds,
         "items": items,
     }
-
-
-def build_command_ack_payload(
-    site_id: str,
-    command_id: str,
-    entity_id: str,
-    service: str,
-    status: str,
-    reason: str | None = None,
-) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "schema": COMMAND_ACK_SCHEMA,
-        "site_id": site_id,
-        "command_id": command_id,
-        "entity_id": entity_id,
-        "service": service,
-        "status": status,
-        "sent_at": isoformat_utc(),
-    }
-    if reason:
-        payload["reason"] = reason
-    return payload

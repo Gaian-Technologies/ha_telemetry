@@ -77,7 +77,6 @@ async def async_enroll_managed_site(
             mqtt_username=str(payload["mqtt_username"]).strip(),
             mqtt_password=str(payload["mqtt_password"]),
             hub_url=str(payload.get("hub_url", cleaned_hub_url)).strip().rstrip("/"),
-            commands_allowed=bool(payload.get("commands_allowed", False)),
         )
     except EnrollmentError:
         raise

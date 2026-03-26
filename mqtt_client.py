@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from paho.mqtt import client as mqtt
 
 from .models import EntrySettings
-from .protocol import command_request_topic, desired_topic
+from .protocol import desired_topic
 
 LOGGER = logging.getLogger(__name__)
 
@@ -103,13 +103,11 @@ class TelemetryMqttClient:
         settings: EntrySettings,
         on_connected: ConnectionHandler,
         on_desired: MessageHandler,
-        on_command: MessageHandler,
     ) -> None:
         self._hass = hass
         self._settings = settings
         self._on_connected = on_connected
         self._on_desired = on_desired
-        self._on_command = on_command
         self._loop: asyncio.AbstractEventLoop | None = None
         self._client: mqtt.Client | None = None
         self._connected = asyncio.Event()
@@ -149,8 +147,6 @@ class TelemetryMqttClient:
     def _subscribe_sync(self) -> None:
         assert self._client is not None
         subscriptions = [(desired_topic(self._settings.topic_prefix, self._settings.site_id), 1)]
-        if self._settings.command_subscription_enabled:
-            subscriptions.append((command_request_topic(self._settings.topic_prefix, self._settings.site_id), 1))
         for topic, qos in subscriptions:
             result, _mid = self._client.subscribe(topic, qos=qos)
             if result == mqtt.MQTT_ERR_SUCCESS:
@@ -239,10 +235,6 @@ class TelemetryMqttClient:
 
         if topic == desired_topic(self._settings.topic_prefix, self._settings.site_id):
             await self._on_desired(decoded)
-            return
-
-        if topic == command_request_topic(self._settings.topic_prefix, self._settings.site_id):
-            await self._on_command(decoded)
             return
 
         LOGGER.warning("Ignoring MQTT message on unexpected topic %s", topic)

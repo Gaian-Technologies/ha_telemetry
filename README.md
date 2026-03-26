@@ -1,6 +1,6 @@
 # ha_telemetry
 
-`ha_telemetry` is a Home Assistant custom integration that publishes telemetry snapshots to a remotely hosted `data_hub` over MQTT and accepts a small allow-listed set of remote commands.
+`ha_telemetry` is a Home Assistant custom integration that publishes telemetry snapshots to a remotely hosted `data_hub` over MQTT.
 
 The supported workflow is the managed public-hub workflow:
 
@@ -38,7 +38,6 @@ In the Home Assistant form, enter:
 - Hub API URL
 - Enrollment token
 - Telemetry entities
-- Command-enabled entities
 - Fallback telemetry interval
 - Fallback heartbeat interval
 
@@ -48,6 +47,5 @@ The integration then validates the hub response and verifies that the returned M
 
 - This integration supports managed hub enrollment only.
 - This integration assumes a publicly trusted broker certificate and the supported `data_hub` deployment shape.
-- Command-enabled entities must also be selected for telemetry.
 - If setup says it cannot reach the hub, check the public Hub API URL, DNS, firewall, and reverse proxy configuration.
 - If setup says it cannot connect to the MQTT broker returned by the hub, check public reachability to port `8883`, TLS certificate validity, and the broker hostname returned by the hub.

@@ -8,7 +8,6 @@
           "hub_url": "Hub API URL",
           "enrollment_token": "Enrollment token",
           "entity_ids": "Telemetry entities",
-          "command_entity_ids": "Command-enabled entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
         }
@@ -27,7 +26,6 @@
         "data": {
           "hub_url": "Hub API URL",
           "entity_ids": "Telemetry entities",
-          "command_entity_ids": "Command-enabled entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
         }
@@ -36,7 +34,6 @@
     "error": {
       "cannot_connect": "Enrollment succeeded, but Home Assistant could not connect to the MQTT broker returned by the hub.",
       "cannot_reach_hub": "Could not reach the hub API URL. Check the URL, DNS, firewall, and reverse proxy configuration.",
-      "command_entities_not_subset": "Command-enabled entities must also be selected for telemetry.",
       "entity_ids_required": "Select at least one entity.",
       "hub_rejected_enrollment": "The hub rejected the enrollment request.",
       "hub_request_failed": "The hub request failed before enrollment could complete.",

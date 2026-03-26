@@ -12,17 +12,14 @@ from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import ALLOWED_COMMAND_SERVICES, TELEMETRY_ATTRIBUTE_ALLOWLIST
+from .const import TELEMETRY_ATTRIBUTE_ALLOWLIST
 from .models import DesiredConfig, EntrySettings
 from .mqtt_client import TelemetryMqttClient
 from .protocol import (
-    COMMAND_REQUEST_SCHEMA,
     DESIRED_SCHEMA,
-    build_command_ack_payload,
     build_heartbeat_payload,
     build_reported_payload,
     build_telemetry_payload,
-    command_ack_topic,
     heartbeat_topic,
     reported_topic,
     telemetry_topic,
@@ -43,7 +40,7 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 class TelemetryManager:
-    """Own the MQTT session, publish cadence, and command handling for one site."""
+    """Own the MQTT session and publish cadence for one telemetry site."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, settings: EntrySettings) -> None:
         self.hass = hass
@@ -59,7 +56,6 @@ class TelemetryManager:
             settings=settings,
             on_connected=self._async_handle_connection_state,
             on_desired=self._async_handle_desired,
-            on_command=self._async_handle_command,
         )
 
     async def async_start(self) -> None:
@@ -93,93 +89,6 @@ class TelemetryManager:
         if self._desired.enabled:
             await self._async_publish_telemetry()
 
-    async def _async_handle_command(self, payload: dict[str, Any]) -> None:
-        if payload.get("schema") != COMMAND_REQUEST_SCHEMA:
-            LOGGER.warning("Ignoring command payload with unexpected schema: %s", payload.get("schema"))
-            return
-
-        if payload.get("site_id") != self.settings.site_id:
-            LOGGER.warning("Ignoring command targeted at another site: %s", payload)
-            return
-
-        command_id = str(payload.get("command_id", "")).strip()
-        entity_id = str(payload.get("entity_id", "")).strip()
-        service = str(payload.get("service", "")).strip()
-
-        if not command_id or not entity_id or not service:
-            LOGGER.warning("Ignoring malformed command payload: %s", payload)
-            return
-
-        if not self._desired.commands_enabled:
-            await self._async_publish_command_ack(
-                command_id=command_id,
-                entity_id=entity_id,
-                service=service,
-                status="rejected",
-                reason="commands_disabled_by_hub",
-            )
-            return
-
-        if entity_id not in self.settings.entity_ids or entity_id not in self.settings.command_entity_ids:
-            await self._async_publish_command_ack(
-                command_id=command_id,
-                entity_id=entity_id,
-                service=service,
-                status="rejected",
-                reason="entity_not_command_enabled",
-            )
-            return
-
-        if service not in ALLOWED_COMMAND_SERVICES:
-            await self._async_publish_command_ack(
-                command_id=command_id,
-                entity_id=entity_id,
-                service=service,
-                status="rejected",
-                reason="service_not_allowed",
-            )
-            return
-
-        service_data = payload.get("service_data") or {}
-        if not isinstance(service_data, dict):
-            await self._async_publish_command_ack(
-                command_id=command_id,
-                entity_id=entity_id,
-                service=service,
-                status="rejected",
-                reason="service_data_must_be_an_object",
-            )
-            return
-
-        domain, service_name = service.split(".", 1)
-        command_data = dict(service_data)
-        command_data["entity_id"] = entity_id
-
-        try:
-            await self.hass.services.async_call(
-                domain,
-                service_name,
-                command_data,
-                blocking=True,
-            )
-        except Exception as err:
-            LOGGER.exception("Remote command execution failed for %s", entity_id)
-            await self._async_publish_command_ack(
-                command_id=command_id,
-                entity_id=entity_id,
-                service=service,
-                status="failed",
-                reason=str(err),
-            )
-            return
-
-        await self._async_publish_command_ack(
-            command_id=command_id,
-            entity_id=entity_id,
-            service=service,
-            status="completed",
-        )
-
     async def _async_telemetry_tick(self, _now) -> None:
         await self._async_publish_telemetry()
 
@@ -211,24 +120,6 @@ class TelemetryManager:
             self._sequence,
         )
         await self._async_publish(heartbeat_topic(self.settings.topic_prefix, self.settings.site_id), payload)
-
-    async def _async_publish_command_ack(
-        self,
-        command_id: str,
-        entity_id: str,
-        service: str,
-        status: str,
-        reason: str | None = None,
-    ) -> None:
-        payload = build_command_ack_payload(
-            site_id=self.settings.site_id,
-            command_id=command_id,
-            entity_id=entity_id,
-            service=service,
-            status=status,
-            reason=reason,
-        )
-        await self._async_publish(command_ack_topic(self.settings.topic_prefix, self.settings.site_id), payload)
 
     async def _async_publish(self, topic: str, payload: dict[str, Any], *, retain: bool = False) -> None:
         try:
@@ -311,10 +202,8 @@ class TelemetryManager:
             "site_id": self.settings.site_id,
             "topic_prefix": self.settings.topic_prefix,
             "selected_entity_count": len(self.settings.entity_ids),
-            "command_entity_count": len(self.settings.command_entity_ids),
             "desired_config": {
                 "enabled": self._desired.enabled,
-                "commands_enabled": self._desired.commands_enabled,
                 "telemetry_interval_seconds": self._desired.telemetry_interval_seconds,
                 "heartbeat_interval_seconds": self._desired.heartbeat_interval_seconds,
                 "config_version": self._desired.config_version,

@@ -10,7 +10,6 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
 from .const import (
-    CONF_COMMAND_ENTITY_IDS,
     CONF_ENTITY_IDS,
     CONF_HEARTBEAT_INTERVAL_SECONDS,
     CONF_HUB_URL,
@@ -51,13 +50,8 @@ class EntrySettings:
     mqtt_username: str
     mqtt_password: str
     entity_ids: tuple[str, ...]
-    command_entity_ids: tuple[str, ...]
     telemetry_interval_seconds: int
     heartbeat_interval_seconds: int
-
-    @property
-    def command_subscription_enabled(self) -> bool:
-        return bool(self.command_entity_ids)
 
     @property
     def transport(self) -> str:
@@ -81,7 +75,6 @@ class EntrySettings:
             mqtt_username=str(data[CONF_MQTT_USERNAME]).strip(),
             mqtt_password=str(data[CONF_MQTT_PASSWORD]),
             entity_ids=normalize_entity_ids(data.get(CONF_ENTITY_IDS, [])),
-            command_entity_ids=normalize_entity_ids(data.get(CONF_COMMAND_ENTITY_IDS, [])),
             telemetry_interval_seconds=_positive_int(
                 data.get(CONF_TELEMETRY_INTERVAL_SECONDS),
                 DEFAULT_TELEMETRY_INTERVAL_SECONDS,
@@ -104,7 +97,6 @@ class ManagedEnrollmentResult:
     mqtt_username: str
     mqtt_password: str
     hub_url: str
-    commands_allowed: bool
 
 
 @dataclass(slots=True)
@@ -112,7 +104,6 @@ class DesiredConfig:
     """Hub-controlled behavior that the integration applies locally."""
 
     enabled: bool
-    commands_enabled: bool
     telemetry_interval_seconds: int
     heartbeat_interval_seconds: int
     config_version: int
@@ -121,7 +112,6 @@ class DesiredConfig:
     def from_settings(cls, settings: EntrySettings) -> "DesiredConfig":
         return cls(
             enabled=True,
-            commands_enabled=False,
             telemetry_interval_seconds=settings.telemetry_interval_seconds,
             heartbeat_interval_seconds=settings.heartbeat_interval_seconds,
             config_version=0,
@@ -131,7 +121,6 @@ class DesiredConfig:
     def from_payload(cls, payload: dict[str, Any], settings: EntrySettings) -> "DesiredConfig":
         return cls(
             enabled=bool(payload.get("enabled", True)),
-            commands_enabled=bool(payload.get("commands_enabled", False)),
             telemetry_interval_seconds=_positive_int(
                 payload.get("telemetry_interval_seconds"),
                 settings.telemetry_interval_seconds,
