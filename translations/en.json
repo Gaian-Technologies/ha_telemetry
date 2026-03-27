@@ -11,6 +11,9 @@
           "entity_ids": "Telemetry entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
+        },
+        "data_description": {
+          "country": "Start typing to filter the list, then select your country."
         }
       },
       "reauth": {
@@ -30,6 +33,9 @@
           "entity_ids": "Telemetry entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
+        },
+        "data_description": {
+          "country": "Start typing to filter the list, then select your country."
         }
       }
     },

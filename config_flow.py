@@ -46,7 +46,7 @@ class CannotConnectError(Exception):
 class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Create, reauth, and reconfigure entries for a single managed site."""
 
-    VERSION = 4
+    VERSION = 5
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}

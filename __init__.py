@@ -4,6 +4,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
+from .countries import normalize_country
 from .const import CONF_COUNTRY, DOMAIN
 from .manager import TelemetryManager
 from .models import EntrySettings
@@ -16,7 +17,7 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    if entry.version >= 4:
+    if entry.version >= 5:
         return True
 
     migrated_data = dict(entry.data)
@@ -31,11 +32,21 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         migrated_data.setdefault(CONF_COUNTRY, "")
         migrated_options.setdefault(CONF_COUNTRY, "")
 
+    if entry.version < 5:
+        for payload in (migrated_data, migrated_options):
+            raw_country = str(payload.get(CONF_COUNTRY, "") or "").strip()
+            if not raw_country:
+                continue
+            try:
+                payload[CONF_COUNTRY] = normalize_country(raw_country)
+            except ValueError:
+                payload[CONF_COUNTRY] = ""
+
     hass.config_entries.async_update_entry(
         entry,
         data=migrated_data,
         options=migrated_options,
-        version=4,
+        version=5,
     )
     return True
 
