@@ -4,6 +4,7 @@ from typing import Final
 
 DOMAIN: Final = "ha_telemetry"
 
+CONF_COUNTRY: Final = "country"
 CONF_HUB_URL: Final = "hub_url"
 CONF_ENROLLMENT_TOKEN: Final = "enrollment_token"
 CONF_SITE_ID: Final = "site_id"

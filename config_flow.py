@@ -10,7 +10,9 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers import selector
 
+from .countries import build_country_selector, normalize_country
 from .const import (
+    CONF_COUNTRY,
     CONF_ENROLLMENT_TOKEN,
     CONF_ENTITY_IDS,
     CONF_HEARTBEAT_INTERVAL_SECONDS,
@@ -33,6 +35,10 @@ class EntitySelectionError(Exception):
     """Raised when the entity selection is invalid."""
 
 
+class CountrySelectionError(Exception):
+    """Raised when the country selection is invalid."""
+
+
 class CannotConnectError(Exception):
     """Raised when the MQTT broker connection test fails."""
 
@@ -40,7 +46,7 @@ class CannotConnectError(Exception):
 class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Create, reauth, and reconfigure entries for a single managed site."""
 
-    VERSION = 3
+    VERSION = 4
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
@@ -49,6 +55,8 @@ class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 cleaned = await _validate_setup(self.hass, user_input)
             except EntitySelectionError as err:
+                errors["base"] = str(err)
+            except CountrySelectionError as err:
                 errors["base"] = str(err)
             except EnrollmentError as err:
                 errors["base"] = err.translation_key
@@ -100,6 +108,8 @@ class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 updates = _validate_reconfigure(user_input)
             except EntitySelectionError as err:
                 errors["base"] = str(err)
+            except CountrySelectionError as err:
+                errors["base"] = str(err)
             else:
                 return self.async_update_reload_and_abort(
                     entry,
@@ -121,7 +131,14 @@ def _entry_defaults(entry: config_entries.ConfigEntry) -> dict[str, Any]:
 
 
 def _build_shared_entity_fields(defaults: dict[str, Any]) -> dict:
+    country = str(defaults.get(CONF_COUNTRY, "") or "").strip()
+    country_field = (
+        vol.Required(CONF_COUNTRY, default=country)
+        if country
+        else vol.Required(CONF_COUNTRY)
+    )
     return {
+        country_field: build_country_selector(),
         vol.Required(
             CONF_ENTITY_IDS,
             default=defaults.get(CONF_ENTITY_IDS, []),
@@ -174,7 +191,12 @@ def _validate_entity_selection(user_input: dict[str, Any]) -> tuple[str, ...]:
 
 def _normalize_shared(user_input: dict[str, Any]) -> dict[str, Any]:
     entity_ids = _validate_entity_selection(user_input)
+    try:
+        country = normalize_country(str(user_input.get(CONF_COUNTRY, "") or ""))
+    except ValueError as err:
+        raise CountrySelectionError(str(err)) from err
     return {
+        CONF_COUNTRY: country,
         CONF_ENTITY_IDS: list(entity_ids),
         CONF_TELEMETRY_INTERVAL_SECONDS: int(user_input.get(CONF_TELEMETRY_INTERVAL_SECONDS, DEFAULT_TELEMETRY_INTERVAL_SECONDS)),
         CONF_HEARTBEAT_INTERVAL_SECONDS: int(user_input.get(CONF_HEARTBEAT_INTERVAL_SECONDS, DEFAULT_HEARTBEAT_INTERVAL_SECONDS)),
@@ -182,8 +204,9 @@ def _normalize_shared(user_input: dict[str, Any]) -> dict[str, Any]:
 
 
 def _managed_entry_data(local_settings: dict[str, Any], enrollment) -> dict[str, Any]:
-    # Entity selection and local publish cadence stay operator-controlled; the
-    # hub owns broker identity and topic namespace.
+    # Country, entity selection, and local publish cadence stay
+    # Home-Assistant-side settings; the hub owns broker identity and topic
+    # namespace.
     return {
         CONF_HUB_URL: enrollment.hub_url,
         CONF_HOST: enrollment.mqtt_host,
@@ -229,6 +252,7 @@ async def _validate_reauth(hass, entry: config_entries.ConfigEntry, user_input: 
     )
 
     local_settings = {
+        CONF_COUNTRY: str(entry.data.get(CONF_COUNTRY, "")).strip(),
         CONF_ENTITY_IDS: list(entry.data.get(CONF_ENTITY_IDS, [])),
         CONF_TELEMETRY_INTERVAL_SECONDS: int(entry.data.get(CONF_TELEMETRY_INTERVAL_SECONDS, DEFAULT_TELEMETRY_INTERVAL_SECONDS)),
         CONF_HEARTBEAT_INTERVAL_SECONDS: int(entry.data.get(CONF_HEARTBEAT_INTERVAL_SECONDS, DEFAULT_HEARTBEAT_INTERVAL_SECONDS)),

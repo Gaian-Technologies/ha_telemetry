@@ -44,6 +44,7 @@ def build_reported_payload(settings: EntrySettings, desired: DesiredConfig, conn
     return {
         "schema": REPORTED_SCHEMA,
         "site_id": settings.site_id,
+        "country": settings.country or None,
         "connected": connected,
         "selected_entities": list(settings.entity_ids),
         "telemetry_enabled": desired.enabled,

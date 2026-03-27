@@ -15,6 +15,7 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigE
 
     return {
         "config": {
+            "country": settings.country,
             "hub_url": settings.hub_url,
             "host": settings.host,
             "port": settings.port,

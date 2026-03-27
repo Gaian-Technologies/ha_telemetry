@@ -197,6 +197,7 @@ class TelemetryManager:
     def diagnostics(self) -> dict[str, Any]:
         return {
             "connected": self._connected,
+            "country": self.settings.country,
             "hub_url": self.settings.hub_url,
             "host": self.settings.host,
             "site_id": self.settings.site_id,

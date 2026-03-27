@@ -9,7 +9,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 
+from .countries import normalize_country
 from .const import (
+    CONF_COUNTRY,
     CONF_ENTITY_IDS,
     CONF_HEARTBEAT_INTERVAL_SECONDS,
     CONF_HUB_URL,
@@ -42,6 +44,7 @@ def _positive_int(value: Any, default: int) -> int:
 class EntrySettings:
     """Resolved integration settings for one enrolled Home Assistant site."""
 
+    country: str
     hub_url: str
     host: str
     port: int
@@ -66,7 +69,9 @@ class EntrySettings:
     @classmethod
     def from_mapping(cls, hass: HomeAssistant, data: dict[str, Any]) -> "EntrySettings":
         del hass
+        raw_country = str(data.get(CONF_COUNTRY, "") or "").strip()
         return cls(
+            country=normalize_country(raw_country) if raw_country else "",
             hub_url=str(data.get(CONF_HUB_URL, "")).strip().rstrip("/"),
             host=str(data[CONF_HOST]).strip(),
             port=int(data.get(CONF_PORT, DEFAULT_PORT)),

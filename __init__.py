@@ -4,7 +4,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
-from .const import DOMAIN
+from .const import CONF_COUNTRY, DOMAIN
 from .manager import TelemetryManager
 from .models import EntrySettings
 from .mqtt_client import MqttAuthenticationError, MqttConnectionError
@@ -16,17 +16,26 @@ async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    if entry.version >= 3:
+    if entry.version >= 4:
         return True
 
-    legacy_command_key = "command_entity_ids"
-    migrated_data = {key: value for key, value in entry.data.items() if key != legacy_command_key}
-    migrated_options = {key: value for key, value in entry.options.items() if key != legacy_command_key}
+    migrated_data = dict(entry.data)
+    migrated_options = dict(entry.options)
+
+    if entry.version < 3:
+        legacy_command_key = "command_entity_ids"
+        migrated_data.pop(legacy_command_key, None)
+        migrated_options.pop(legacy_command_key, None)
+
+    if entry.version < 4:
+        migrated_data.setdefault(CONF_COUNTRY, "")
+        migrated_options.setdefault(CONF_COUNTRY, "")
+
     hass.config_entries.async_update_entry(
         entry,
         data=migrated_data,
         options=migrated_options,
-        version=3,
+        version=4,
     )
     return True
 
