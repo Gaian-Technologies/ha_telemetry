@@ -132,13 +132,8 @@ def _entry_defaults(entry: config_entries.ConfigEntry) -> dict[str, Any]:
 
 def _build_shared_entity_fields(defaults: dict[str, Any]) -> dict:
     country = str(defaults.get(CONF_COUNTRY, "") or "").strip()
-    country_field = (
-        vol.Required(CONF_COUNTRY, default=country)
-        if country
-        else vol.Required(CONF_COUNTRY)
-    )
     return {
-        country_field: build_country_selector(),
+        vol.Required(CONF_COUNTRY, default=country): build_country_selector(),
         vol.Required(
             CONF_ENTITY_IDS,
             default=defaults.get(CONF_ENTITY_IDS, []),
