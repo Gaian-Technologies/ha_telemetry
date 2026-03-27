@@ -10,6 +10,8 @@ from typing import Final
 
 from homeassistant.helpers import selector
 
+EMPTY_COUNTRY_OPTION: Final[str] = ""
+
 COUNTRY_NAMES: Final[tuple[str, ...]] = (
     "Afghanistan",
     "Albania",
@@ -271,7 +273,9 @@ def build_country_selector() -> selector.SelectSelector:
     """Return the supported setup selector for country choice."""
 
     return selector.SelectSelector(
-        selector.SelectSelectorConfig(options=list(COUNTRY_NAMES))
+        selector.SelectSelectorConfig(
+            options=[EMPTY_COUNTRY_OPTION, *COUNTRY_NAMES]
+        )
     )
 
 
