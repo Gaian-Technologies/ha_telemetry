@@ -37,12 +37,12 @@ In the Home Assistant form, enter:
 
 - Hub API URL
 - Enrollment token
-- Country
 - Telemetry entities
 - Fallback telemetry interval
 - Fallback heartbeat interval
 
-The integration then validates the hub response, verifies that the returned MQTT broker is reachable, and reports the selected country to `data_hub` as part of the site metadata.
+The integration then validates the hub response and verifies that the returned
+MQTT broker is reachable.
 
 ## Notes
 

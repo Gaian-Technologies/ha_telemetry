@@ -3,17 +3,13 @@
     "step": {
       "user": {
         "title": "Set up Home Assistant Telemetry",
-        "description": "Enter the data_hub API URL, your enrollment token, your country, and the entities to share. Example: https://hub.example.com",
+        "description": "Enter the data_hub API URL, your enrollment token, and the entities to share. Example: https://hub.example.com",
         "data": {
           "hub_url": "Hub API URL",
           "enrollment_token": "Enrollment token",
-          "country": "Country",
           "entity_ids": "Telemetry entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
-        },
-        "data_description": {
-          "country": "Start typing to filter the list, then select your country."
         }
       },
       "reauth": {
@@ -26,28 +22,22 @@
       },
       "reconfigure": {
         "title": "Reconfigure telemetry settings",
-        "description": "Update the Hub API URL, country, and local entity selection for this site.",
+        "description": "Update the Hub API URL and local entity selection for this site.",
         "data": {
           "hub_url": "Hub API URL",
-          "country": "Country",
           "entity_ids": "Telemetry entities",
           "telemetry_interval_seconds": "Fallback telemetry interval (seconds)",
           "heartbeat_interval_seconds": "Fallback heartbeat interval (seconds)"
-        },
-        "data_description": {
-          "country": "Start typing to filter the list, then select your country."
         }
       }
     },
     "error": {
       "cannot_connect": "Enrollment succeeded, but Home Assistant could not connect to the MQTT broker returned by the hub.",
       "cannot_reach_hub": "Could not reach the hub API URL. Check the URL, DNS, firewall, and reverse proxy configuration.",
-      "country_required": "Select a country.",
       "entity_ids_required": "Select at least one entity.",
       "hub_rejected_enrollment": "The hub rejected the enrollment request.",
       "hub_request_failed": "The hub request failed before enrollment could complete.",
       "hub_timeout": "Timed out waiting for the hub to respond.",
-      "invalid_country": "Select a valid country from the list.",
       "invalid_enrollment_response": "The hub returned an invalid enrollment response.",
       "invalid_enrollment_token": "The enrollment token is invalid, expired, revoked, or already used.",
       "invalid_hub_url": "Enter the full hub API URL, including http:// or https://.",
