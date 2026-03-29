@@ -1,6 +1,9 @@
 {
   "domain": "ha_telemetry",
   "name": "Home Assistant Telemetry",
+  "documentation": "https://github.com/Gaian-Technologies/ha_telemetry#readme",
+  "issue_tracker": "https://github.com/Gaian-Technologies/ha_telemetry/issues",
+  "codeowners": ["@Gaian-Technologies"],
   "config_flow": true,
   "integration_type": "service",
   "loggers": ["paho"],

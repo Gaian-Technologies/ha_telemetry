@@ -1,6 +1,7 @@
 # ha_telemetry
 
-`ha_telemetry` is a Home Assistant custom integration that publishes telemetry snapshots to a remotely hosted `data_hub` over MQTT.
+`ha_telemetry` is a Home Assistant custom integration that publishes
+telemetry snapshots to a remotely hosted `data_hub` over MQTT.
 
 The supported workflow is the managed public-hub workflow:
 
@@ -10,20 +11,42 @@ The supported workflow is the managed public-hub workflow:
 4. the hub returns broker credentials and topic details
 5. Home Assistant connects directly to the MQTT broker over TLS
 
-The repo root is the install path for Home Assistant. Clone it directly into:
+## Install
+
+### Preferred: HACS Custom Repository
+
+Use HACS for the cleanest install and update path. At this stage, add the
+repo as a custom repository.
+
+1. Make sure HACS is already installed in Home Assistant.
+2. Open `HACS -> Integrations`.
+3. Open the top-right menu, choose `Custom repositories`, and add:
+
+   - Repository: `https://github.com/Gaian-Technologies/ha_telemetry`
+   - Category: `Integration`
+
+4. Find `Home Assistant Telemetry` in HACS and download it.
+5. Restart Home Assistant.
+
+### Fallback: Manual Install
+
+If you are not using HACS, copy the repo root into:
 
     /config/custom_components/ha_telemetry
 
-## Install
+The easiest manual path is usually the Home Assistant `Terminal & SSH`
+add-on web terminal:
 
-1. Clone the repo.
+```bash
+cd /config/custom_components
+git clone https://github.com/Gaian-Technologies/ha_telemetry.git ha_telemetry
+```
 
-   ```bash
-   cd /config/custom_components
-   git clone https://github.com/Gaian-Technologies/ha_telemetry.git ha_telemetry
-   ```
+You can also download the GitHub ZIP and copy the extracted
+`ha_telemetry` folder into `/config/custom_components/` using `Studio Code
+Server`, `File editor`, Samba, or another file access method.
 
-2. Restart Home Assistant.
+Restart Home Assistant after installing or updating the integration.
 
 ## Supported Setup
 
