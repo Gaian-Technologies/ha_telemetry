@@ -10,6 +10,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers import selector
 
+from .entity_validation import validate_selected_entities
 from .const import (
     CONF_ENROLLMENT_TOKEN,
     CONF_ENTITY_IDS,
@@ -97,7 +98,7 @@ class HATelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                updates = _validate_reconfigure(user_input)
+                updates = _validate_reconfigure(self.hass, user_input)
             except EntitySelectionError as err:
                 errors["base"] = str(err)
             else:
@@ -165,15 +166,18 @@ def _build_reconfigure_schema(defaults: dict[str, Any]) -> vol.Schema:
     )
 
 
-def _validate_entity_selection(user_input: dict[str, Any]) -> tuple[str, ...]:
+def _validate_entity_selection(hass, user_input: dict[str, Any]) -> tuple[str, ...]:
     entity_ids = normalize_entity_ids(user_input.get(CONF_ENTITY_IDS, []))
     if not entity_ids:
         raise EntitySelectionError("entity_ids_required")
+    error_key = validate_selected_entities(hass, entity_ids)
+    if error_key:
+        raise EntitySelectionError(error_key)
     return entity_ids
 
 
-def _normalize_shared(user_input: dict[str, Any]) -> dict[str, Any]:
-    entity_ids = _validate_entity_selection(user_input)
+def _normalize_shared(hass, user_input: dict[str, Any]) -> dict[str, Any]:
+    entity_ids = _validate_entity_selection(hass, user_input)
     return {
         CONF_ENTITY_IDS: list(entity_ids),
         CONF_TELEMETRY_INTERVAL_SECONDS: int(user_input.get(CONF_TELEMETRY_INTERVAL_SECONDS, DEFAULT_TELEMETRY_INTERVAL_SECONDS)),
@@ -197,7 +201,7 @@ def _managed_entry_data(local_settings: dict[str, Any], enrollment) -> dict[str,
 
 
 async def _validate_setup(hass, user_input: dict[str, Any]) -> dict[str, Any]:
-    normalized = _normalize_shared(user_input)
+    normalized = _normalize_shared(hass, user_input)
     hub_url = str(user_input[CONF_HUB_URL]).strip().rstrip("/")
     enrollment_token = str(user_input[CONF_ENROLLMENT_TOKEN]).strip()
 
@@ -240,7 +244,7 @@ async def _validate_reauth(hass, entry: config_entries.ConfigEntry, user_input: 
     return updated
 
 
-def _validate_reconfigure(user_input: dict[str, Any]) -> dict[str, Any]:
-    normalized = _normalize_shared(user_input)
+def _validate_reconfigure(hass, user_input: dict[str, Any]) -> dict[str, Any]:
+    normalized = _normalize_shared(hass, user_input)
     normalized[CONF_HUB_URL] = str(user_input[CONF_HUB_URL]).strip().rstrip("/")
     return normalized

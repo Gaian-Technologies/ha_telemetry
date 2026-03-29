@@ -47,6 +47,7 @@ MQTT broker is reachable.
 ## Notes
 
 - This integration supports managed hub enrollment only.
+- This generic integration does not enforce project-specific unit or sensor rules on the selected entities.
 - This integration assumes a publicly trusted broker certificate and the supported `data_hub` deployment shape.
 - If setup says it cannot reach the hub, check the public Hub API URL, DNS, firewall, and reverse proxy configuration.
 - If setup says it cannot connect to the MQTT broker returned by the hub, check public reachability to port `8883`, TLS certificate validity, and the broker hostname returned by the hub.
