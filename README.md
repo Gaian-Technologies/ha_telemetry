@@ -20,7 +20,7 @@ The repo root is the install path for Home Assistant. Clone it directly into:
 
    ```bash
    cd /config/custom_components
-   git clone <repo-url> ha_telemetry
+   git clone https://github.com/Gaian-Technologies/ha_telemetry.git ha_telemetry
    ```
 
 2. Restart Home Assistant.
