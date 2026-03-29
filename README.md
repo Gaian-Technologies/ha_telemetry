@@ -13,24 +13,10 @@ The supported workflow is the managed public-hub workflow:
 
 ## Install
 
-### Preferred: HACS Custom Repository
+### Preferred: Manual Install
 
-Use HACS for the cleanest install and update path. At this stage, add the
-repo as a custom repository.
-
-1. Make sure HACS is already installed in Home Assistant.
-2. Open `HACS -> Integrations`.
-3. Open the top-right menu, choose `Custom repositories`, and add:
-
-   - Repository: `https://github.com/Gaian-Technologies/ha_telemetry`
-   - Category: `Integration`
-
-4. Find `Home Assistant Telemetry` in HACS and download it.
-5. Restart Home Assistant.
-
-### Fallback: Manual Install
-
-If you are not using HACS, copy the repo root into:
+For early rollout, the simplest and most reproducible path is to copy the repo
+root into:
 
     /config/custom_components/ha_telemetry
 
@@ -47,6 +33,21 @@ You can also download the GitHub ZIP and copy the extracted
 Server`, `File editor`, Samba, or another file access method.
 
 Restart Home Assistant after installing or updating the integration.
+
+### Optional: HACS Custom Repository
+
+If you already use HACS, you can install this repo as a custom repository
+instead.
+
+1. Make sure HACS is already installed in Home Assistant.
+2. Open `HACS`.
+3. Open the top-right 3 dot menu, choose `Custom repositories`, and add:
+
+   - Repository: `https://github.com/Gaian-Technologies/ha_telemetry`
+   - Category: `Integration`
+
+4. Find `Home Assistant Telemetry` in HACS and download it.
+5. Restart Home Assistant.
 
 ## Supported Setup
 
@@ -71,6 +72,7 @@ MQTT broker is reachable.
 
 - This integration supports managed hub enrollment only.
 - This generic integration does not enforce project-specific unit or sensor rules on the selected entities.
+- A bundled `brand/icon.png` is included so recent Home Assistant versions can show the custom integration icon for both manual installs and HACS installs.
 - This integration assumes a publicly trusted broker certificate and the supported `data_hub` deployment shape.
 - If setup says it cannot reach the hub, check the public Hub API URL, DNS, firewall, and reverse proxy configuration.
 - If setup says it cannot connect to the MQTT broker returned by the hub, check public reachability to port `8883`, TLS certificate validity, and the broker hostname returned by the hub.
