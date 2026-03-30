@@ -3,6 +3,11 @@
 `ha_telemetry` is a Home Assistant custom integration that publishes
 telemetry snapshots to a remotely hosted `data_hub` over MQTT.
 
+If you are discovering the stack from this repo first, the server-side
+counterpart is [`data_hub`](/ssd2/Gaian/Workspace/data_hub), and the optional
+public token-distribution flow is handled by
+[`enrollment_portal`](/ssd2/Gaian/Workspace/enrollment_portal).
+
 The supported workflow is the managed public-hub workflow:
 
 1. the operator gives Home Assistant a public Hub API URL
