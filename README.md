@@ -37,12 +37,22 @@ You can also download the GitHub ZIP and copy the extracted
 `ha_telemetry` folder into `/config/custom_components/` using `Studio Code
 Server`, `File editor`, Samba, or another file access method.
 
-Reboot Home Assistant after installing or updating the integration. If you are
-using a terminal, the simplest path is usually:
+Restart Home Assistant after installing or updating the integration. The most
+generic path is the Home Assistant UI restart option. If you are using the
+Home Assistant CLI in `Terminal & SSH`, run:
 
 ```bash
-sudo reboot
+ha core restart
 ```
+
+If your environment does not provide the `ha` command, reboot the host
+instead:
+
+```bash
+reboot
+```
+
+If your shell is not already running as root, use `sudo reboot`.
 
 ### Optional: HACS Custom Repository
 
@@ -57,7 +67,7 @@ instead.
    - Category: `Integration`
 
 4. Find `Home Assistant Telemetry` in HACS and download it.
-5. Reboot Home Assistant.
+5. Restart Home Assistant.
 
 ## Supported Setup
 
