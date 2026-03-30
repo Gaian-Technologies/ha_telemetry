@@ -34,6 +34,9 @@ cd /config/custom_components
 git clone https://github.com/Gaian-Technologies/ha_telemetry.git ha_telemetry
 ```
 
+`mkdir -p` is safe to run even if `custom_components` already exists, so the
+same command works for both first-time and experienced users.
+
 On Home Assistant OS and Supervised installs, the configuration directory is
 usually mounted at `/config`, so the commands above normally work as written.
 
