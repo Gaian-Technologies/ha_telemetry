@@ -20,22 +20,34 @@ The supported workflow is the managed public-hub workflow:
 
 ### Preferred: Manual Install
 
-For early rollout, the simplest and most reproducible path is to copy the repo
-root into:
+For early rollout, the simplest and most reproducible path is to place the
+repo in:
 
-    /config/custom_components/ha_telemetry
+    <config directory>/custom_components/ha_telemetry
 
 The easiest manual path is usually the Home Assistant `Terminal & SSH`
 add-on web terminal:
 
 ```bash
+mkdir -p /config/custom_components
 cd /config/custom_components
 git clone https://github.com/Gaian-Technologies/ha_telemetry.git ha_telemetry
 ```
 
+On Home Assistant OS and Supervised installs, the configuration directory is
+usually mounted at `/config`, so the commands above normally work as written.
+
+If `/config` does not exist in your environment, first find your Home
+Assistant configuration directory in:
+
+`Settings -> System -> Repairs -> three dot menu -> System information`
+
+Then create a `custom_components` directory inside that configuration
+directory if needed, and place `ha_telemetry` there.
+
 You can also download the GitHub ZIP and copy the extracted
-`ha_telemetry` folder into `/config/custom_components/` using `Studio Code
-Server`, `File editor`, Samba, or another file access method.
+`ha_telemetry` folder into `<config directory>/custom_components/` using
+`Studio Code Server`, `File editor`, Samba, or another file access method.
 
 Restart Home Assistant after installing or updating the integration. The most
 generic path is the Home Assistant UI restart option. If you are using the
