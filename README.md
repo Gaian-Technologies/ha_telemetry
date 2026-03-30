@@ -69,6 +69,25 @@ instead.
 4. Find `Home Assistant Telemetry` in HACS and download it.
 5. Restart Home Assistant.
 
+## Add The Integration
+
+After Home Assistant has restarted:
+
+1. Open `Settings`.
+2. Open `Devices & Services`.
+3. Open the `Integrations` tab.
+4. Click `Add Integration`.
+5. Search for `Home Assistant Telemetry`.
+6. Select the integration and continue through the setup form.
+
+In the form, enter:
+
+- Hub API URL
+- Enrollment token
+- Telemetry entities
+- Fallback telemetry interval
+- Fallback heartbeat interval
+
 ## Supported Setup
 
 Use the integration only with managed hub enrollment.
@@ -76,14 +95,6 @@ You need:
 
 - a public Hub API URL such as `https://hub.example.com`
 - an `enrollment_token` issued by `data_hub`
-
-In the Home Assistant form, enter:
-
-- Hub API URL
-- Enrollment token
-- Telemetry entities
-- Fallback telemetry interval
-- Fallback heartbeat interval
 
 The integration then validates the hub response and verifies that the returned
 MQTT broker is reachable.
